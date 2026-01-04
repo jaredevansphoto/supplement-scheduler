@@ -1,0 +1,115 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  name          String?
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  schedules     UserSchedule[]
+  intakes       Intake[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Account {
+  id                String  @id @default(uuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Ingredient {
+  id                    String @id @default(uuid())
+  name                  String @unique
+  rda                   String?
+  ul                    String?
+  units                 String?
+  notes                 String?
+  supplementIngredients SupplementIngredient[]
+  createdAt             DateTime @default(now())
+}
+
+model Supplement {
+  id          String @id @default(uuid())
+  name        String @unique
+  servingSize String?
+  cycleRule   String?
+  notes       String?
+  ingredients SupplementIngredient[]
+  schedules   UserSchedule[]
+  intakes     Intake[]
+  createdAt   DateTime @default(now())
+}
+
+model SupplementIngredient {
+  id           String     @id @default(uuid())
+  supplementId String
+  ingredientId String
+  dose         String
+  supplement   Supplement @relation(fields: [supplementId], references: [id], onDelete: Cascade)
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+}
+
+model UserSchedule {
+  id           String     @id @default(uuid())
+  userId       String
+  supplementId String
+  time         String
+  dose         String
+  withFood     Boolean    @default(false)
+  daysOfWeek   String?
+  notes        String?
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  supplement   Supplement @relation(fields: [supplementId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+}
+
+model Intake {
+  id           String     @id @default(uuid())
+  userId       String
+  supplementId String
+  date         DateTime
+  status       String
+  actualDose   String?
+  notes        String?
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  supplement   Supplement @relation(fields: [supplementId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+}
